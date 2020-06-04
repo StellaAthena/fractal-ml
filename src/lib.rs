@@ -10,11 +10,7 @@ use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
 
-fn calculate_hash<T: Hash>(t: &[f64]) -> u64 {
-    
-    t.hash(&mut s);
-    s.finish()
-}
+
 
 #[pymodule]
 fn fractal_ml(_py: Python, m: &PyModule) -> PyResult<()> {
@@ -49,29 +45,30 @@ fn fractal_ml(_py: Python, m: &PyModule) -> PyResult<()> {
     #[pyfn(m, "approx_box_counting")]
     pub fn approx_box_counting(
         scaling_factor: f64,
-        max_scale: i32,
         min_scale: i32,
+        max_scale: i32,
         dataset: &PyArray2<f64>,
     ) -> Vec<u64> {
         let len = dataset.shape()[0];
-        let dim = dataset.shape()[1];
 
         let mut output = Vec::with_capacity(len);
 
         for j in 0..((max_scale - min_scale) as usize) {
-            let hashes: HashSet<u64> = HashSet::new();
-            let scale: f64 = scaling_factor.powi(j as i32 - min_scale);
+            let mut hashes: HashSet<u64> = HashSet::new();
+            let scale: f64 = scaling_factor.powi(j as i32 + min_scale);
             for i in 0..len {
-                let mut s = DefaultHasher::new();
-                output_slice: Vec<u64> = directions
-                    .as_array()
-                    .slice(s![len, ..])
-                    .for_each(|x| (x * scale).floor().to_bits().hash(&mut s));
-                hashes.insert(s.finish());
+                let mut hash_state = DefaultHasher::new();
+                dataset.as_array()
+                    .slice(s![i, ..])
+                    .as_slice()
+                    .unwrap()
+                    .iter()
+                    .for_each(|x| (x * scale).floor().to_bits().hash(&mut hash_state));
+                hashes.insert(hash_state.finish());
             }
             output.push(hashes.len() as u64);
         }
-        
+
         output
     }
 
