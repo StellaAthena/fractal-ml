@@ -55,7 +55,7 @@ fn fractal_ml(_py: Python, m: &PyModule) -> PyResult<()> {
 
         for j in 0..((max_scale - min_scale) as usize) {
             let mut hashes: HashSet<u64> = HashSet::new();
-            let scale: f64 = scaling_factor.powi(j as i32 + min_scale);
+            let scale: f64 = scaling_factor.powi(-(j as i32 + min_scale));
             for i in 0..len {
                 let mut hash_state = DefaultHasher::new();
                 dataset.as_array()
